@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useRef, useState } from 'react';
-import { Camera, Image as ImageIcon, Sparkles, Check, RefreshCw } from 'lucide-react';
+import { Camera, Image as ImageIcon, Sparkles, Check, RefreshCw, AlertCircle } from 'lucide-react';
 import { FoodAnalysisResult, MealType } from '@/types';
 
 interface CameraScanModalProps {
@@ -17,9 +17,10 @@ export const CameraScanModal: React.FC<CameraScanModalProps> = ({
   onClose,
   onConfirmMeal,
   openrouterKey,
-  preferredModel = 'google/gemini-2.5-flash',
+  preferredModel = 'openai/gpt-4o-mini',
 }) => {
-  const fileInputRef = useRef<HTMLInputElement>(null);
+  const cameraInputRef = useRef<HTMLInputElement>(null);
+  const galleryInputRef = useRef<HTMLInputElement>(null);
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
   const [analyzing, setAnalyzing] = useState(false);
   const [analysisResult, setAnalysisResult] = useState<FoodAnalysisResult | null>(null);
@@ -68,7 +69,7 @@ export const CameraScanModal: React.FC<CameraScanModalProps> = ({
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           imageBase64: base64Data,
-          model: preferredModel,
+          model: preferredModel || 'openai/gpt-4o-mini',
           customApiKey: openrouterKey,
         }),
       });
@@ -110,12 +111,21 @@ export const CameraScanModal: React.FC<CameraScanModalProps> = ({
 
   return (
     <div className="fixed inset-0 z-50 bg-black/90 backdrop-blur-md flex flex-col justify-between p-4 pt-12 pb-8 overflow-y-auto">
-      {/* 隐藏的真实文件输入框 (支持拍照 capture 与相册) */}
+      {/* 1. 专门唤起相机的 input */}
       <input
         type="file"
-        ref={fileInputRef}
+        ref={cameraInputRef}
         accept="image/*"
         capture="environment"
+        className="hidden"
+        onChange={handleFileChange}
+      />
+
+      {/* 2. 专门唤起系统相册的 input */}
+      <input
+        type="file"
+        ref={galleryInputRef}
+        accept="image/*"
         className="hidden"
         onChange={handleFileChange}
       />
@@ -154,12 +164,21 @@ export const CameraScanModal: React.FC<CameraScanModalProps> = ({
         </div>
 
         <div className="text-[11px] text-zinc-400 font-mono bg-zinc-900 px-2.5 py-1 rounded-full border border-zinc-800">
-          {preferredModel.split('/')[1] || 'Gemini'}
+          {preferredModel.split('/')[1] || 'gpt-4o-mini'}
         </div>
       </div>
 
-      {/* 中部：相机取景框 / 预览区域 */}
-      <div className="relative flex-1 w-full max-h-[380px] bg-zinc-950 rounded-3xl overflow-hidden border border-zinc-800 flex items-center justify-center">
+      {/* 中部：相机取景框 / 预览区域 (点击也能直接拍照) */}
+      <div
+        onClick={() => {
+          if (!selectedImage && !analyzing) {
+            cameraInputRef.current?.click();
+          }
+        }}
+        className={`relative flex-1 w-full max-h-[380px] bg-zinc-950 rounded-3xl overflow-hidden border border-zinc-800 flex items-center justify-center ${
+          !selectedImage ? 'cursor-pointer active:border-emerald-500/80 transition' : ''
+        }`}
+      >
         {selectedImage ? (
           <>
             {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -171,7 +190,7 @@ export const CameraScanModal: React.FC<CameraScanModalProps> = ({
             {analyzing && (
               <div className="absolute inset-0 bg-black/40 backdrop-blur-[2px] flex flex-col items-center justify-center">
                 <div className="scanner-laser absolute left-4 right-4 h-0.5 bg-gradient-to-r from-transparent via-emerald-400 to-transparent shadow-[0_0_15px_#10b981]" />
-                <div className="bg-black/70 px-4 py-2 rounded-2xl border border-emerald-500/30 flex items-center gap-2 text-emerald-400 text-xs font-semibold">
+                <div className="bg-black/70 px-4 py-2 rounded-2xl border border-emerald-500/30 flex items-center gap-2 text-emerald-400 text-xs font-semibold shadow-2xl">
                   <Sparkles className="w-4 h-4 animate-spin" />
                   AI 正在深度解析食材与热量...
                 </div>
@@ -179,28 +198,29 @@ export const CameraScanModal: React.FC<CameraScanModalProps> = ({
             )}
           </>
         ) : (
-          <div className="flex flex-col items-center gap-3 text-zinc-500 text-center p-6">
-            <div className="w-16 h-16 rounded-full bg-zinc-900 flex items-center justify-center text-zinc-400">
-              <Camera className="w-8 h-8" />
+          <div className="flex flex-col items-center gap-3 text-zinc-500 text-center p-6 select-none">
+            <div className="w-18 h-18 rounded-full bg-zinc-900/90 border border-zinc-800 flex items-center justify-center text-emerald-400 shadow-inner group-hover:scale-105 transition">
+              <Camera className="w-9 h-9" />
             </div>
-            <p className="text-sm font-medium text-zinc-300">对准食物拍照，或从相册选取</p>
-            <p className="text-xs text-zinc-500">
-              AI 将秒级识别食物重量、卡路里与三大宏量营养素
-            </p>
+            <div>
+              <p className="text-sm font-bold text-zinc-200">点击此处立刻拍照</p>
+              <p className="text-xs text-zinc-500 mt-1">或点击下方「相册选取」上传美食图片</p>
+            </div>
           </div>
         )}
       </div>
 
       {/* 错误提示 */}
       {errorMessage && (
-        <div className="my-2 p-3 bg-red-950/50 border border-red-800/60 rounded-2xl text-xs text-red-300">
-          ⚠️ {errorMessage}
+        <div className="my-2 p-3 bg-red-950/60 border border-red-800/80 rounded-2xl text-xs text-red-200 flex items-center gap-2">
+          <AlertCircle className="w-4 h-4 flex-shrink-0 text-red-400" />
+          <span>{errorMessage}</span>
         </div>
       )}
 
       {/* 底部：AI 分析结果卡片 */}
       {analysisResult && (
-        <div className="my-3 bg-zinc-900 border border-zinc-800 rounded-3xl p-4 space-y-3 shadow-xl">
+        <div className="my-3 bg-zinc-900 border border-zinc-800 rounded-3xl p-4 space-y-3 shadow-xl animate-fadeIn">
           <div className="flex items-start justify-between">
             <div className="flex items-center gap-2.5">
               <span className="text-3xl">{analysisResult.emoji || '🥗'}</span>
@@ -267,18 +287,18 @@ export const CameraScanModal: React.FC<CameraScanModalProps> = ({
       )}
 
       {/* 底部主操作区 */}
-      <div className="flex items-center justify-around gap-4 pt-2">
+      <div className="flex items-center justify-around gap-3 pt-2">
         {!selectedImage ? (
           <>
             <button
-              onClick={() => fileInputRef.current?.click()}
+              onClick={() => galleryInputRef.current?.click()}
               className="flex-1 py-3.5 bg-zinc-800 hover:bg-zinc-700 text-white rounded-2xl font-semibold text-xs flex items-center justify-center gap-2 active:scale-95 transition"
             >
-              <ImageIcon className="w-4 h-4" />
+              <ImageIcon className="w-4 h-4 text-zinc-300" />
               相册选取
             </button>
             <button
-              onClick={() => fileInputRef.current?.click()}
+              onClick={() => cameraInputRef.current?.click()}
               className="flex-1 py-3.5 bg-emerald-500 hover:bg-emerald-600 text-white rounded-2xl font-bold text-xs flex items-center justify-center gap-2 active:scale-95 transition shadow-lg shadow-emerald-500/20"
             >
               <Camera className="w-4 h-4" />
@@ -289,7 +309,7 @@ export const CameraScanModal: React.FC<CameraScanModalProps> = ({
           <>
             <button
               onClick={handleReset}
-              className="py-3 px-4 bg-zinc-800 text-zinc-300 rounded-2xl text-xs font-semibold flex items-center gap-1.5"
+              className="py-3 px-4 bg-zinc-800 text-zinc-300 rounded-2xl text-xs font-semibold flex items-center gap-1.5 active:scale-95"
             >
               <RefreshCw className="w-4 h-4" />
               重拍

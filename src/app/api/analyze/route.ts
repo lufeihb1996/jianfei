@@ -2,6 +2,9 @@ import { NextRequest, NextResponse } from 'next/server';
 
 export const runtime = 'edge';
 
+// 服务端自动获取全局环境变量，或在未配置时给出友好中文提示
+const DEFAULT_FALLBACK_API_KEY = process.env.OPENROUTER_API_KEY || '';
+
 const SYSTEM_PROMPT = `
 你是一位极其专业、严谨且富有同理心的注册临床营养师与减脂专家。
 用户会发送一张食物的照片。你的任务是：
@@ -33,16 +36,20 @@ const SYSTEM_PROMPT = `
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
-    const { imageBase64, model = 'google/gemini-2.5-flash', customApiKey } = body;
+    const { imageBase64, model = 'openai/gpt-4o-mini', customApiKey } = body;
 
     if (!imageBase64) {
       return NextResponse.json({ error: '请提供待识别的食物图片' }, { status: 400 });
     }
 
-    const apiKey = customApiKey || process.env.OPENROUTER_API_KEY;
-    if (!apiKey) {
+    // 优先用户在前端设置中保存的 Key，其次读取服务端 process.env
+    const apiKey = (customApiKey && customApiKey.trim().length > 5)
+      ? customApiKey.trim()
+      : (process.env.OPENROUTER_API_KEY || DEFAULT_FALLBACK_API_KEY);
+
+    if (!apiKey || !apiKey.startsWith('sk-or-')) {
       return NextResponse.json(
-        { error: '未检测到 OpenRouter API 密钥，请在设置页面配置您的 API Key。' },
+        { error: '未检测到 OpenRouter API 密钥。请点击右下角「体征设置」，在【OpenRouter API 密钥】输入框中粘贴您的 sk-or-v1- 密钥并保存即可使用。' },
         { status: 401 }
       );
     }
@@ -62,7 +69,7 @@ export async function POST(req: NextRequest) {
         'X-Title': 'CaloAI Diet Assistant',
       },
       body: JSON.stringify({
-        model: model,
+        model: model || 'openai/gpt-4o-mini',
         response_format: { type: 'json_object' },
         messages: [
           {
