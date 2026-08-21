@@ -24,6 +24,7 @@ export interface UserProfile {
   gender: Gender;
   age: number;
   height_cm: number;
+  initial_weight_kg?: number;
   weight_kg: number;
   target_weight_kg: number;
   activity_level: number; // 1.2, 1.375, 1.55, 1.725
@@ -44,4 +45,9 @@ export interface MealRecord {
   ingredients: Ingredient[];
   ai_advice: string;
   eaten_at: string;
+}
+
+export interface WeightRecord {
+  date: string; // YYYY-MM-DD
+  weight_kg: number;
 }

@@ -34,10 +34,11 @@ export const DEFAULT_PROFILE: UserProfile = {
   gender: 'male',
   age: 26,
   height_cm: 175,
+  initial_weight_kg: 72.0,
   weight_kg: 68.5,
   target_weight_kg: 62.0,
   activity_level: 1.375,
   target_deficit_kcal: 400,
   openrouter_key: '',
-  preferred_model: 'google/gemini-2.5-flash'
+  preferred_model: 'openai/gpt-4o-mini'
 };

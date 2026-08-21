@@ -11,7 +11,7 @@ import { UserProfile, MealRecord, FoodAnalysisResult, MealType } from '@/types';
 import { DeficitDualRing } from '@/components/DeficitDualRing';
 import { CameraScanModal } from '@/components/CameraScanModal';
 import { SettingsModal } from '@/components/SettingsModal';
-import { HistoryModal } from '@/components/HistoryModal';
+import { TrendAnalysisView } from '@/components/TrendAnalysisView';
 import {
   Camera,
   Settings,
@@ -19,15 +19,15 @@ import {
   Plus,
   Trash2,
   Sparkles,
-  History,
+  TrendingDown,
 } from 'lucide-react';
 
 export default function HomePage() {
+  const [currentTab, setCurrentTab] = useState<'today' | 'trends'>('today');
   const [profile, setProfile] = useState<UserProfile>(DEFAULT_PROFILE);
   const [meals, setMeals] = useState<MealRecord[]>([]);
   const [isCameraOpen, setIsCameraOpen] = useState(false);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
-  const [isHistoryOpen, setIsHistoryOpen] = useState(false);
   const [liveBurned, setLiveBurned] = useState(0);
 
   // 初始化加载 LocalStorage 数据
@@ -49,7 +49,6 @@ export default function HomePage() {
         console.error('Failed to parse saved meals', e);
       }
     } else {
-      // 首次加载提供一份逼真的初始示例数据
       const initialMock: MealRecord[] = [
         {
           id: '1',
@@ -103,11 +102,16 @@ export default function HomePage() {
     return () => clearInterval(interval);
   }, [profile]);
 
-  // 计算今日总热量与三大宏量
-  const totalIntake = meals.reduce((sum, m) => sum + m.calories, 0);
-  const totalProtein = meals.reduce((sum, m) => sum + m.protein_g, 0);
-  const totalCarbs = meals.reduce((sum, m) => sum + m.carbs_g, 0);
-  const totalFat = meals.reduce((sum, m) => sum + m.fat_g, 0);
+  // 计算今日总热量与三大宏量 (仅筛选当天的数据)
+  const todayStr = new Date().toISOString().split('T')[0];
+  const todayMeals = meals.filter(
+    (m) => (m.eaten_at ? m.eaten_at.split('T')[0] : '') === todayStr
+  );
+
+  const totalIntake = todayMeals.reduce((sum, m) => sum + m.calories, 0);
+  const totalProtein = todayMeals.reduce((sum, m) => sum + m.protein_g, 0);
+  const totalCarbs = todayMeals.reduce((sum, m) => sum + m.carbs_g, 0);
+  const totalFat = todayMeals.reduce((sum, m) => sum + m.fat_g, 0);
 
   const bmr = calculateBMR(profile.gender, profile.weight_kg, profile.height_cm, profile.age);
   const tdee = calculateTDEE(bmr, profile.activity_level);
@@ -119,6 +123,13 @@ export default function HomePage() {
   const handleSaveProfile = (newProfile: UserProfile) => {
     setProfile(newProfile);
     localStorage.setItem('caloai_profile', JSON.stringify(newProfile));
+  };
+
+  // 更新当前体重
+  const handleUpdateWeight = (newWeight: number) => {
+    const updated = { ...profile, weight_kg: newWeight };
+    setProfile(updated);
+    localStorage.setItem('caloai_profile', JSON.stringify(updated));
   };
 
   // 添加一餐
@@ -150,8 +161,8 @@ export default function HomePage() {
   };
 
   return (
-    <main className="min-h-screen max-w-md mx-auto flex flex-col justify-between pb-28 pt-4 px-4">
-      {/* 顶部标题与状态栏 */}
+    <main className="min-h-screen max-w-md mx-auto flex flex-col justify-between pb-28 pt-4 px-4 select-none">
+      {/* 顶部标题与设置入口 */}
       <header className="flex justify-between items-center py-2">
         <div className="flex items-center gap-2">
           <div className="w-8 h-8 rounded-xl bg-gradient-to-tr from-emerald-500 to-teal-400 flex items-center justify-center text-black font-extrabold text-sm shadow-md shadow-emerald-500/20">
@@ -159,178 +170,196 @@ export default function HomePage() {
           </div>
           <div>
             <h1 className="text-lg font-black tracking-tight text-white">CaloAI</h1>
-            <p className="text-[10px] text-zinc-500 font-medium">卡路里缺口减脂模式</p>
+            <p className="text-[10px] text-zinc-500 font-medium">科学减脂与热量赤字模型</p>
           </div>
         </div>
 
         <div className="flex items-center gap-2">
           <button
             onClick={() => setIsSettingsOpen(true)}
-            className="w-9 h-9 rounded-full bg-zinc-900 border border-zinc-800 flex items-center justify-center text-zinc-400 hover:text-white transition active:scale-95"
+            className="w-9 h-9 rounded-full bg-zinc-900 border border-zinc-800 flex items-center justify-center text-zinc-400 hover:text-white transition active:scale-95 shadow-sm"
           >
             <Settings className="w-4 h-4" />
           </button>
         </div>
       </header>
 
-      {/* 主滚动区域 */}
-      <div className="space-y-4 mt-2">
-        {/* 1. 核心双环热量缺口看板 (用户指定) */}
-        <DeficitDualRing
-          deficit={liveDeficit}
-          burnedLive={liveBurned}
-          tdee={tdee}
-          intake={totalIntake}
-          targetDeficit={profile.target_deficit_kcal}
-        />
+      {/* TAB 1: 今日缺口 (Today Tab) */}
+      {currentTab === 'today' && (
+        <div className="space-y-4 mt-2 animate-fadeIn">
+          {/* 1. 核心双环热量缺口看板 */}
+          <DeficitDualRing
+            deficit={liveDeficit}
+            burnedLive={liveBurned}
+            tdee={tdee}
+            intake={totalIntake}
+            targetDeficit={profile.target_deficit_kcal}
+          />
 
-        {/* 2. 三大宏量营养素胶囊标签 */}
-        <div className="grid grid-cols-3 gap-2">
-          <div className="bg-zinc-900 border border-zinc-800 p-2.5 rounded-2xl">
-            <span className="text-[10px] text-blue-400 font-medium block">蛋白质</span>
-            <div className="flex items-baseline gap-1 mt-0.5">
-              <span className="text-sm font-bold text-white">{Math.round(totalProtein)}</span>
-              <span className="text-[10px] text-zinc-500">/ 110g</span>
+          {/* 2. 三大宏量营养素胶囊标签 */}
+          <div className="grid grid-cols-3 gap-2">
+            <div className="bg-zinc-900 border border-zinc-800 p-2.5 rounded-2xl">
+              <span className="text-[10px] text-blue-400 font-medium block">蛋白质</span>
+              <div className="flex items-baseline gap-1 mt-0.5">
+                <span className="text-sm font-bold text-white">{Math.round(totalProtein)}</span>
+                <span className="text-[10px] text-zinc-500">/ 110g</span>
+              </div>
+              <div className="w-full bg-zinc-950 h-1 rounded-full mt-1.5 overflow-hidden">
+                <div
+                  className="bg-blue-500 h-full rounded-full"
+                  style={{ width: `${Math.min((totalProtein / 110) * 100, 100)}%` }}
+                />
+              </div>
             </div>
-            <div className="w-full bg-zinc-950 h-1 rounded-full mt-1.5 overflow-hidden">
-              <div
-                className="bg-blue-500 h-full rounded-full"
-                style={{ width: `${Math.min((totalProtein / 110) * 100, 100)}%` }}
-              />
+
+            <div className="bg-zinc-900 border border-zinc-800 p-2.5 rounded-2xl">
+              <span className="text-[10px] text-amber-400 font-medium block">碳水化合物</span>
+              <div className="flex items-baseline gap-1 mt-0.5">
+                <span className="text-sm font-bold text-white">{Math.round(totalCarbs)}</span>
+                <span className="text-[10px] text-zinc-500">/ 160g</span>
+              </div>
+              <div className="w-full bg-zinc-950 h-1 rounded-full mt-1.5 overflow-hidden">
+                <div
+                  className="bg-amber-500 h-full rounded-full"
+                  style={{ width: `${Math.min((totalCarbs / 160) * 100, 100)}%` }}
+                />
+              </div>
+            </div>
+
+            <div className="bg-zinc-900 border border-zinc-800 p-2.5 rounded-2xl">
+              <span className="text-[10px] text-rose-400 font-medium block">优质脂肪</span>
+              <div className="flex items-baseline gap-1 mt-0.5">
+                <span className="text-sm font-bold text-white">{Math.round(totalFat)}</span>
+                <span className="text-[10px] text-zinc-500">/ 45g</span>
+              </div>
+              <div className="w-full bg-zinc-950 h-1 rounded-full mt-1.5 overflow-hidden">
+                <div
+                  className="bg-rose-500 h-full rounded-full"
+                  style={{ width: `${Math.min((totalFat / 45) * 100, 100)}%` }}
+                />
+              </div>
             </div>
           </div>
 
-          <div className="bg-zinc-900 border border-zinc-800 p-2.5 rounded-2xl">
-            <span className="text-[10px] text-amber-400 font-medium block">碳水化合物</span>
-            <div className="flex items-baseline gap-1 mt-0.5">
-              <span className="text-sm font-bold text-white">{Math.round(totalCarbs)}</span>
-              <span className="text-[10px] text-zinc-500">/ 160g</span>
-            </div>
-            <div className="w-full bg-zinc-950 h-1 rounded-full mt-1.5 overflow-hidden">
-              <div
-                className="bg-amber-500 h-full rounded-full"
-                style={{ width: `${Math.min((totalCarbs / 160) * 100, 100)}%` }}
-              />
+          {/* 3. AI 拍照上传卡片入口 */}
+          <div
+            onClick={() => setIsCameraOpen(true)}
+            className="relative overflow-hidden bg-gradient-to-r from-emerald-600 via-teal-600 to-emerald-700 rounded-3xl p-4 text-white shadow-lg shadow-emerald-500/20 cursor-pointer active:scale-[0.98] transition"
+          >
+            <div className="relative z-10 flex items-center justify-between">
+              <div className="space-y-1">
+                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-white/20 text-[10px] font-bold backdrop-blur-sm">
+                  <Sparkles className="w-3 h-3" /> OpenRouter 视觉 AI
+                </span>
+                <h3 className="text-base font-extrabold leading-snug">拍照分析食物热量</h3>
+                <p className="text-xs text-emerald-100">阅后即焚零存图 · 自动拆解配料与减脂建议</p>
+              </div>
+              <div className="w-13 h-13 rounded-2xl bg-white/15 border border-white/30 flex items-center justify-center text-2xl shadow-inner backdrop-blur-md">
+                📸
+              </div>
             </div>
           </div>
 
-          <div className="bg-zinc-900 border border-zinc-800 p-2.5 rounded-2xl">
-            <span className="text-[10px] text-rose-400 font-medium block">优质脂肪</span>
-            <div className="flex items-baseline gap-1 mt-0.5">
-              <span className="text-sm font-bold text-white">{Math.round(totalFat)}</span>
-              <span className="text-[10px] text-zinc-500">/ 45g</span>
-            </div>
-            <div className="w-full bg-zinc-950 h-1 rounded-full mt-1.5 overflow-hidden">
-              <div
-                className="bg-rose-500 h-full rounded-full"
-                style={{ width: `${Math.min((totalFat / 45) * 100, 100)}%` }}
-              />
-            </div>
-          </div>
-        </div>
-
-        {/* 3. AI 拍照上传卡片入口 */}
-        <div
-          onClick={() => setIsCameraOpen(true)}
-          className="relative overflow-hidden bg-gradient-to-r from-emerald-600 via-teal-600 to-emerald-700 rounded-3xl p-4 text-white shadow-lg shadow-emerald-500/20 cursor-pointer active:scale-[0.98] transition"
-        >
-          <div className="relative z-10 flex items-center justify-between">
-            <div className="space-y-1">
-              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-white/20 text-[10px] font-bold backdrop-blur-sm">
-                <Sparkles className="w-3 h-3" /> OpenRouter 视觉 AI
-              </span>
-              <h3 className="text-base font-extrabold leading-snug">拍照分析食物热量</h3>
-              <p className="text-xs text-emerald-100">阅后即焚零存图 · 自动拆解配料与建议</p>
-            </div>
-            <div className="w-13 h-13 rounded-2xl bg-white/15 border border-white/30 flex items-center justify-center text-2xl shadow-inner backdrop-blur-md">
-              📸
-            </div>
-          </div>
-        </div>
-
-        {/* 4. 今日餐次记录流 */}
-        <div className="space-y-2.5 pt-1">
-          <div className="flex justify-between items-center px-1">
-            <h3 className="text-xs font-bold text-zinc-400 uppercase tracking-wider">
-              今日饮食明细 ({meals.length} 餐)
-            </h3>
-            <div className="flex items-center gap-2">
-              <button
-                onClick={() => setIsHistoryOpen(true)}
-                className="text-xs bg-zinc-800 hover:bg-zinc-700 text-zinc-200 px-2.5 py-1 rounded-xl font-medium flex items-center gap-1 transition active:scale-95"
-              >
-                <History className="w-3 h-3 text-purple-400" /> 查看历史
-              </button>
+          {/* 4. 今日餐次记录流 */}
+          <div className="space-y-2.5 pt-1">
+            <div className="flex justify-between items-center px-1">
+              <h3 className="text-xs font-bold text-zinc-400 uppercase tracking-wider">
+                今日饮食明细 ({todayMeals.length} 餐)
+              </h3>
               <button
                 onClick={() => setIsCameraOpen(true)}
-                className="text-xs bg-emerald-500 hover:bg-emerald-600 text-white px-2.5 py-1 rounded-xl font-bold flex items-center gap-1 transition active:scale-95 shadow-sm shadow-emerald-500/20"
+                className="text-xs text-emerald-400 font-semibold flex items-center gap-0.5"
               >
-                <Camera className="w-3 h-3" /> 拍照打卡
+                <Plus className="w-3.5 h-3.5" /> 拍一餐
               </button>
             </div>
-          </div>
 
-          {meals.length === 0 ? (
-            <div className="bg-zinc-900/50 border border-dashed border-zinc-800 rounded-3xl p-8 text-center text-zinc-500 text-xs">
-              今天还没有记录任何餐食，点击上方「拍照分析」开始打卡吧 🥗
-            </div>
-          ) : (
-            meals.map((meal) => (
-              <div
-                key={meal.id}
-                className="bg-zinc-900 border border-zinc-800/90 p-3.5 rounded-2xl flex items-center justify-between transition hover:border-zinc-700"
-              >
-                <div className="flex items-center gap-3">
-                  <div className="w-11 h-11 rounded-xl bg-zinc-950 border border-zinc-800 flex items-center justify-center text-xl">
-                    {meal.emoji}
-                  </div>
-                  <div>
-                    <h4 className="text-xs font-bold text-white">{meal.food_name}</h4>
-                    <p className="text-[11px] text-zinc-500 mt-0.5">
-                      蛋 {meal.protein_g}g · 碳 {meal.carbs_g}g · 脂 {meal.fat_g}g
-                    </p>
-                  </div>
-                </div>
-
-                <div className="flex items-center gap-3">
-                  <div className="text-right">
-                    <span className="text-xs font-extrabold text-white">+{meal.calories}</span>
-                    <span className="text-[9px] text-zinc-500 block font-mono">kcal</span>
-                  </div>
-                  <button
-                    onClick={() => handleDeleteMeal(meal.id)}
-                    className="text-zinc-600 hover:text-red-400 transition p-1"
-                  >
-                    <Trash2 className="w-3.5 h-3.5" />
-                  </button>
-                </div>
+            {todayMeals.length === 0 ? (
+              <div className="bg-zinc-900/50 border border-dashed border-zinc-800 rounded-3xl p-8 text-center text-zinc-500 text-xs">
+                今天还没有记录任何餐食，点击上方「拍照分析」开始打卡吧 🥗
               </div>
-            ))
-          )}
-        </div>
-      </div>
+            ) : (
+              todayMeals.map((meal) => (
+                <div
+                  key={meal.id}
+                  className="bg-zinc-900 border border-zinc-800/90 p-3.5 rounded-2xl flex items-center justify-between transition hover:border-zinc-700"
+                >
+                  <div className="flex items-center gap-3">
+                    <div className="w-11 h-11 rounded-xl bg-zinc-950 border border-zinc-800 flex items-center justify-center text-xl">
+                      {meal.emoji}
+                    </div>
+                    <div>
+                      <h4 className="text-xs font-bold text-white">{meal.food_name}</h4>
+                      <p className="text-[11px] text-zinc-500 mt-0.5">
+                        蛋 {meal.protein_g}g · 碳 {meal.carbs_g}g · 脂 {meal.fat_g}g
+                      </p>
+                    </div>
+                  </div>
 
-      {/* 底部固定导航条 (三个核心按钮平齐对齐：今日缺口、历史记录、体征设置) */}
-      <nav className="fixed bottom-0 inset-x-0 h-16 glass-nav border-t border-zinc-800/80 px-4 flex justify-around items-center z-40 max-w-md mx-auto">
-        <button className="flex-1 flex flex-col items-center justify-center gap-1 text-emerald-400 font-bold">
+                  <div className="flex items-center gap-3">
+                    <div className="text-right">
+                      <span className="text-xs font-extrabold text-white">+{meal.calories}</span>
+                      <span className="text-[9px] text-zinc-500 block font-mono">kcal</span>
+                    </div>
+                    <button
+                      onClick={() => handleDeleteMeal(meal.id)}
+                      className="text-zinc-600 hover:text-red-400 transition p-1"
+                    >
+                      <Trash2 className="w-3.5 h-3.5" />
+                    </button>
+                  </div>
+                </div>
+              ))
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* TAB 2: 减重趋势与历史分析 (Trends Tab) */}
+      {currentTab === 'trends' && (
+        <div className="mt-2 animate-fadeIn">
+          <TrendAnalysisView
+            meals={meals}
+            profile={profile}
+            onUpdateWeight={handleUpdateWeight}
+            onDeleteMeal={handleDeleteMeal}
+          />
+        </div>
+      )}
+
+      {/* 底部固定导航条 (左：今日缺口，中：拍照识别，右：减重趋势) */}
+      <nav className="fixed bottom-0 inset-x-0 h-16 glass-nav border-t border-zinc-800/80 px-6 flex justify-around items-center z-40 max-w-md mx-auto">
+        <button
+          onClick={() => setCurrentTab('today')}
+          className={`flex-1 flex flex-col items-center justify-center gap-1 transition ${
+            currentTab === 'today'
+              ? 'text-emerald-400 font-bold'
+              : 'text-zinc-500 hover:text-zinc-300'
+          }`}
+        >
           <Flame className="w-5 h-5" />
           <span className="text-[10px] leading-none">今日缺口</span>
         </button>
 
+        {/* 核心中央拍照按钮 (在同一水平线上，醒目高亮) */}
         <button
-          onClick={() => setIsHistoryOpen(true)}
-          className="flex-1 flex flex-col items-center justify-center gap-1 text-zinc-400 hover:text-white active:scale-95 transition font-medium"
+          onClick={() => setIsCameraOpen(true)}
+          className="flex-1 flex flex-col items-center justify-center gap-1 text-emerald-400 hover:text-teal-300 active:scale-95 transition font-bold"
         >
-          <History className="w-5 h-5 text-purple-400" />
-          <span className="text-[10px] leading-none">历史打卡</span>
+          <Camera className="w-5 h-5" />
+          <span className="text-[10px] leading-none">拍照识别</span>
         </button>
 
         <button
-          onClick={() => setIsSettingsOpen(true)}
-          className="flex-1 flex flex-col items-center justify-center gap-1 text-zinc-500 hover:text-zinc-300 active:scale-95 transition"
+          onClick={() => setCurrentTab('trends')}
+          className={`flex-1 flex flex-col items-center justify-center gap-1 transition ${
+            currentTab === 'trends'
+              ? 'text-purple-400 font-bold'
+              : 'text-zinc-500 hover:text-zinc-300'
+          }`}
         >
-          <Settings className="w-5 h-5" />
-          <span className="text-[10px] leading-none">体征模型</span>
+          <TrendingDown className="w-5 h-5" />
+          <span className="text-[10px] leading-none">减重趋势</span>
         </button>
       </nav>
 
@@ -341,14 +370,6 @@ export default function HomePage() {
         onConfirmMeal={handleConfirmMeal}
         openrouterKey={profile.openrouter_key}
         preferredModel={profile.preferred_model}
-      />
-
-      <HistoryModal
-        isOpen={isHistoryOpen}
-        onClose={() => setIsHistoryOpen(false)}
-        meals={meals}
-        profile={profile}
-        onDeleteMeal={handleDeleteMeal}
       />
 
       <SettingsModal

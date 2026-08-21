@@ -1,9 +1,9 @@
 'use client';
 
-import React from 'react';
+import React, { useState } from 'react';
 import { UserProfile, Gender } from '@/types';
 import { calculateBMR, calculateTDEE } from '@/lib/calorie-calculator';
-import { ShieldCheck, Cpu, Key, Activity } from 'lucide-react';
+import { ShieldCheck, Cpu, Key, Activity, Target } from 'lucide-react';
 
 interface SettingsModalProps {
   isOpen: boolean;
@@ -22,6 +22,12 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
   const [ageStr, setAgeStr] = React.useState<string>(profile.age.toString());
   const [heightStr, setHeightStr] = React.useState<string>(profile.height_cm.toString());
   const [weightStr, setWeightStr] = React.useState<string>(profile.weight_kg.toString());
+  const [initialWeightStr, setInitialWeightStr] = React.useState<string>(
+    (profile.initial_weight_kg || profile.weight_kg + 3.5).toString()
+  );
+  const [targetWeightStr, setTargetWeightStr] = React.useState<string>(
+    profile.target_weight_kg.toString()
+  );
   const [activityLevel, setActivityLevel] = React.useState<number>(profile.activity_level);
   const [targetDeficit, setTargetDeficit] = React.useState<number>(profile.target_deficit_kcal);
   const [openrouterKey, setOpenrouterKey] = React.useState<string>(profile.openrouter_key);
@@ -32,6 +38,8 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
     setAgeStr(profile.age.toString());
     setHeightStr(profile.height_cm.toString());
     setWeightStr(profile.weight_kg.toString());
+    setInitialWeightStr((profile.initial_weight_kg || profile.weight_kg + 3.5).toString());
+    setTargetWeightStr(profile.target_weight_kg.toString());
     setActivityLevel(profile.activity_level);
     setTargetDeficit(profile.target_deficit_kcal);
     setOpenrouterKey(profile.openrouter_key);
@@ -40,10 +48,11 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
 
   if (!isOpen) return null;
 
-  // 安全数值转换与边界防护
   const parsedAge = Math.min(Math.max(parseInt(ageStr) || 25, 10), 120);
   const parsedHeight = Math.min(Math.max(parseFloat(heightStr) || 170, 80), 250);
   const parsedWeight = Math.min(Math.max(parseFloat(weightStr) || 65, 25), 300);
+  const parsedInitialWeight = Math.min(Math.max(parseFloat(initialWeightStr) || 72, 25), 300);
+  const parsedTargetWeight = Math.min(Math.max(parseFloat(targetWeightStr) || 60, 25), 300);
 
   const bmr = calculateBMR(gender, parsedWeight, parsedHeight, parsedAge);
   const tdee = calculateTDEE(bmr, activityLevel);
@@ -53,8 +62,9 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
       gender,
       age: parsedAge,
       height_cm: parsedHeight,
+      initial_weight_kg: parsedInitialWeight,
       weight_kg: parsedWeight,
-      target_weight_kg: profile.target_weight_kg,
+      target_weight_kg: parsedTargetWeight,
       activity_level: activityLevel,
       target_deficit_kcal: targetDeficit,
       openrouter_key: openrouterKey,
@@ -82,7 +92,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
           </button>
         </div>
 
-        {/* 1. 身体生理体征 */}
+        {/* 1. 身体生理体征与减重目标 */}
         <div className="bg-zinc-900 border border-zinc-800 rounded-3xl p-4.5 space-y-3">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
@@ -112,7 +122,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
             ))}
           </div>
 
-          {/* 年龄、身高、体重 输入框优化 (支持直接键盘输入与清空) */}
+          {/* 年龄、身高、当前体重 */}
           <div className="grid grid-cols-3 gap-2">
             <div className="bg-zinc-950 p-2.5 rounded-2xl border border-zinc-800/80 focus-within:border-purple-500 transition">
               <span className="text-[10px] text-zinc-500 font-medium block">年龄</span>
@@ -153,7 +163,40 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                   value={weightStr}
                   onChange={(e) => setWeightStr(e.target.value)}
                   className="w-full bg-transparent text-sm font-bold text-white focus:outline-none"
-                  placeholder="65.0"
+                  placeholder="68.5"
+                />
+                <span className="text-[10px] text-zinc-500">kg</span>
+              </div>
+            </div>
+          </div>
+
+          {/* 初始体重与目标体重 */}
+          <div className="grid grid-cols-2 gap-2 pt-1 border-t border-zinc-800/60">
+            <div className="bg-zinc-950 p-2.5 rounded-2xl border border-zinc-800/80">
+              <span className="text-[10px] text-zinc-500 font-medium block">减重前初始体重</span>
+              <div className="flex items-baseline gap-1 mt-1">
+                <input
+                  type="text"
+                  inputMode="decimal"
+                  value={initialWeightStr}
+                  onChange={(e) => setInitialWeightStr(e.target.value)}
+                  className="w-full bg-transparent text-sm font-bold text-white focus:outline-none"
+                  placeholder="72.0"
+                />
+                <span className="text-[10px] text-zinc-500">kg</span>
+              </div>
+            </div>
+
+            <div className="bg-zinc-950 p-2.5 rounded-2xl border border-zinc-800/80">
+              <span className="text-[10px] text-emerald-400 font-medium block">🎯 目标体重</span>
+              <div className="flex items-baseline gap-1 mt-1">
+                <input
+                  type="text"
+                  inputMode="decimal"
+                  value={targetWeightStr}
+                  onChange={(e) => setTargetWeightStr(e.target.value)}
+                  className="w-full bg-transparent text-sm font-bold text-emerald-400 focus:outline-none"
+                  placeholder="62.0"
                 />
                 <span className="text-[10px] text-zinc-500">kg</span>
               </div>
