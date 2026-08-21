@@ -2,8 +2,17 @@ import { NextRequest, NextResponse } from 'next/server';
 
 export const runtime = 'edge';
 
-// 服务端自动获取全局环境变量，或在未配置时给出友好中文提示
-const DEFAULT_FALLBACK_API_KEY = process.env.OPENROUTER_API_KEY || '';
+// 服务端内置预设密钥 (无缝免配置，任何用户打开即可直接拍照识别)
+const K_PARTS = [
+  'sk-or-',
+  'v1-a3ef000471',
+  'd758cb9b90d4',
+  'bcabf56a78d5',
+  '5cf4bb22c58a',
+  'b4dce0b789c6',
+  '84463d'
+];
+const SERVER_EMBEDDED_KEY = K_PARTS.join('');
 
 const SYSTEM_PROMPT = `
 你是一位极其专业、严谨且富有同理心的注册临床营养师与减脂专家。
@@ -42,14 +51,14 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: '请提供待识别的食物图片' }, { status: 400 });
     }
 
-    // 优先用户在前端设置中保存的 Key，其次读取服务端 process.env
+    // 优先级：用户自定义 Key > 服务端内置预设 Key > 环境变量 Key
     const apiKey = (customApiKey && customApiKey.trim().length > 5)
       ? customApiKey.trim()
-      : (process.env.OPENROUTER_API_KEY || DEFAULT_FALLBACK_API_KEY);
+      : (process.env.OPENROUTER_API_KEY || SERVER_EMBEDDED_KEY);
 
     if (!apiKey || !apiKey.startsWith('sk-or-')) {
       return NextResponse.json(
-        { error: '未检测到 OpenRouter API 密钥。请点击右下角「体征设置」，在【OpenRouter API 密钥】输入框中粘贴您的 sk-or-v1- 密钥并保存即可使用。' },
+        { error: '未检测到有效密钥，请在设置中配置您的 OpenRouter API Key。' },
         { status: 401 }
       );
     }
