@@ -17,6 +17,7 @@ import {
   Flame,
   Plus,
   Trash2,
+  TrendingDown,
   Sparkles,
 } from 'lucide-react';
 
@@ -46,7 +47,6 @@ export default function HomePage() {
         console.error('Failed to parse saved meals', e);
       }
     } else {
-      // 首次加载提供一份逼真的初始示例数据
       const initialMock: MealRecord[] = [
         {
           id: '1',
@@ -147,32 +147,33 @@ export default function HomePage() {
   };
 
   return (
-    <main className="min-h-screen max-w-md mx-auto flex flex-col justify-between pb-28 pt-4 px-4">
-      {/* 顶部标题与状态栏 */}
-      <header className="flex justify-between items-center py-2">
+    <main className="h-screen max-w-md mx-auto flex flex-col justify-between p-3.5 pb-20 overflow-hidden select-none">
+      {/* 顶部标题栏 (精致极简) */}
+      <header className="flex justify-between items-center py-1 flex-shrink-0">
         <div className="flex items-center gap-2">
-          <div className="w-8 h-8 rounded-xl bg-gradient-to-tr from-emerald-500 to-teal-400 flex items-center justify-center text-black font-extrabold text-sm shadow-md shadow-emerald-500/20">
+          <div className="w-7 h-7 rounded-xl bg-gradient-to-tr from-emerald-500 to-teal-400 flex items-center justify-center text-black font-extrabold text-xs shadow-md shadow-emerald-500/20">
             ⚡
           </div>
           <div>
-            <h1 className="text-lg font-black tracking-tight text-white">CaloAI</h1>
-            <p className="text-[10px] text-zinc-500 font-medium">卡路里缺口减脂模式</p>
+            <h1 className="text-base font-black tracking-tight text-white leading-none">CaloAI</h1>
+            <p className="text-[9px] text-zinc-500 font-medium mt-0.5">热量缺口减脂模式</p>
           </div>
         </div>
 
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-1.5">
           <button
             onClick={() => setIsSettingsOpen(true)}
-            className="w-9 h-9 rounded-full bg-zinc-900 border border-zinc-800 flex items-center justify-center text-zinc-400 hover:text-white transition active:scale-95"
+            className="w-8 h-8 rounded-full bg-zinc-900 border border-zinc-800 flex items-center justify-center text-zinc-400 hover:text-white transition active:scale-95 shadow-sm"
           >
-            <Settings className="w-4 h-4" />
+            <Settings className="w-3.5 h-3.5" />
           </button>
         </div>
       </header>
 
-      {/* 主滚动区域 */}
-      <div className="space-y-4 mt-2">
-        {/* 1. 核心双环热量缺口看板 (用户指定) */}
+      {/* 核心紧凑仪表盘容器 (无需上下滚动) */}
+      <div className="flex-1 flex flex-col justify-between py-1 space-y-2 overflow-hidden">
+        
+        {/* 1. 双环卡路里缺口仪表盘 (紧凑精细) */}
         <DeficitDualRing
           deficit={liveDeficit}
           burnedLive={liveBurned}
@@ -181,15 +182,15 @@ export default function HomePage() {
           targetDeficit={profile.target_deficit_kcal}
         />
 
-        {/* 2. 三大宏量营养素胶囊标签 */}
-        <div className="grid grid-cols-3 gap-2">
-          <div className="bg-zinc-900 border border-zinc-800 p-2.5 rounded-2xl">
-            <span className="text-[10px] text-blue-400 font-medium block">蛋白质</span>
-            <div className="flex items-baseline gap-1 mt-0.5">
-              <span className="text-sm font-bold text-white">{Math.round(totalProtein)}</span>
-              <span className="text-[10px] text-zinc-500">/ 110g</span>
+        {/* 2. 三大宏量营养素胶囊标签 (紧凑横排) */}
+        <div className="grid grid-cols-3 gap-1.5 flex-shrink-0">
+          <div className="bg-zinc-900/90 border border-zinc-800 p-2 rounded-2xl">
+            <span className="text-[9px] text-blue-400 font-medium block leading-none">蛋白质</span>
+            <div className="flex items-baseline gap-1 mt-1">
+              <span className="text-xs font-bold text-white">{Math.round(totalProtein)}</span>
+              <span className="text-[9px] text-zinc-500">/ 110g</span>
             </div>
-            <div className="w-full bg-zinc-950 h-1 rounded-full mt-1.5 overflow-hidden">
+            <div className="w-full bg-zinc-950 h-1 rounded-full mt-1 overflow-hidden">
               <div
                 className="bg-blue-500 h-full rounded-full"
                 style={{ width: `${Math.min((totalProtein / 110) * 100, 100)}%` }}
@@ -197,13 +198,13 @@ export default function HomePage() {
             </div>
           </div>
 
-          <div className="bg-zinc-900 border border-zinc-800 p-2.5 rounded-2xl">
-            <span className="text-[10px] text-amber-400 font-medium block">碳水化合物</span>
-            <div className="flex items-baseline gap-1 mt-0.5">
-              <span className="text-sm font-bold text-white">{Math.round(totalCarbs)}</span>
-              <span className="text-[10px] text-zinc-500">/ 160g</span>
+          <div className="bg-zinc-900/90 border border-zinc-800 p-2 rounded-2xl">
+            <span className="text-[9px] text-amber-400 font-medium block leading-none">碳水化合物</span>
+            <div className="flex items-baseline gap-1 mt-1">
+              <span className="text-xs font-bold text-white">{Math.round(totalCarbs)}</span>
+              <span className="text-[9px] text-zinc-500">/ 160g</span>
             </div>
-            <div className="w-full bg-zinc-950 h-1 rounded-full mt-1.5 overflow-hidden">
+            <div className="w-full bg-zinc-950 h-1 rounded-full mt-1 overflow-hidden">
               <div
                 className="bg-amber-500 h-full rounded-full"
                 style={{ width: `${Math.min((totalCarbs / 160) * 100, 100)}%` }}
@@ -211,13 +212,13 @@ export default function HomePage() {
             </div>
           </div>
 
-          <div className="bg-zinc-900 border border-zinc-800 p-2.5 rounded-2xl">
-            <span className="text-[10px] text-rose-400 font-medium block">优质脂肪</span>
-            <div className="flex items-baseline gap-1 mt-0.5">
-              <span className="text-sm font-bold text-white">{Math.round(totalFat)}</span>
-              <span className="text-[10px] text-zinc-500">/ 45g</span>
+          <div className="bg-zinc-900/90 border border-zinc-800 p-2 rounded-2xl">
+            <span className="text-[9px] text-rose-400 font-medium block leading-none">优质脂肪</span>
+            <div className="flex items-baseline gap-1 mt-1">
+              <span className="text-xs font-bold text-white">{Math.round(totalFat)}</span>
+              <span className="text-[9px] text-zinc-500">/ 45g</span>
             </div>
-            <div className="w-full bg-zinc-950 h-1 rounded-full mt-1.5 overflow-hidden">
+            <div className="w-full bg-zinc-950 h-1 rounded-full mt-1 overflow-hidden">
               <div
                 className="bg-rose-500 h-full rounded-full"
                 style={{ width: `${Math.min((totalFat / 45) * 100, 100)}%` }}
@@ -226,102 +227,104 @@ export default function HomePage() {
           </div>
         </div>
 
-        {/* 3. AI 拍照上传卡片入口 */}
+        {/* 3. 紧凑型 AI 拍照卡片入口 */}
         <div
           onClick={() => setIsCameraOpen(true)}
-          className="relative overflow-hidden bg-gradient-to-r from-emerald-600 via-teal-600 to-emerald-700 rounded-3xl p-4 text-white shadow-lg shadow-emerald-500/20 cursor-pointer active:scale-[0.98] transition"
+          className="relative overflow-hidden bg-gradient-to-r from-emerald-600 via-teal-600 to-emerald-700 rounded-2xl p-3 text-white shadow-md shadow-emerald-500/20 cursor-pointer active:scale-[0.98] transition flex-shrink-0"
         >
           <div className="relative z-10 flex items-center justify-between">
-            <div className="space-y-1">
-              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-white/20 text-[10px] font-bold backdrop-blur-sm">
-                <Sparkles className="w-3 h-3" /> OpenRouter 视觉 AI
+            <div className="space-y-0.5">
+              <span className="inline-flex items-center gap-1 px-1.5 py-0.2 rounded-full bg-white/20 text-[9px] font-bold backdrop-blur-sm">
+                <Sparkles className="w-2.5 h-2.5" /> OpenAI GPT-4o mini
               </span>
-              <h3 className="text-base font-extrabold leading-snug">拍照分析食物热量</h3>
-              <p className="text-xs text-emerald-100">阅后即焚零存图 · 自动拆解配料与建议</p>
+              <h3 className="text-xs font-extrabold leading-snug">拍照分析食物热量</h3>
+              <p className="text-[10px] text-emerald-100">阅后即焚零存图 · 秒级食材分解</p>
             </div>
-            <div className="w-13 h-13 rounded-2xl bg-white/15 border border-white/30 flex items-center justify-center text-2xl shadow-inner backdrop-blur-md">
+            <div className="w-10 h-10 rounded-xl bg-white/15 border border-white/30 flex items-center justify-center text-xl shadow-inner backdrop-blur-md">
               📸
             </div>
           </div>
         </div>
 
-        {/* 4. 今日餐次记录流 */}
-        <div className="space-y-2.5 pt-1">
-          <div className="flex justify-between items-center px-1">
-            <h3 className="text-xs font-bold text-zinc-400 uppercase tracking-wider">
-              今日饮食明细 ({meals.length} 餐)
+        {/* 4. 今日餐次记录卡片 (自动适应剩余高度) */}
+        <div className="flex-1 flex flex-col min-h-0 bg-zinc-900/60 border border-zinc-800/80 rounded-2xl p-2.5 space-y-1.5 overflow-hidden">
+          <div className="flex justify-between items-center px-1 flex-shrink-0">
+            <h3 className="text-[10px] font-bold text-zinc-400 uppercase tracking-wider">
+              今日餐次明细 ({meals.length} 餐)
             </h3>
             <button
               onClick={() => setIsCameraOpen(true)}
-              className="text-xs text-emerald-400 font-semibold flex items-center gap-0.5"
+              className="text-[11px] text-emerald-400 font-semibold flex items-center gap-0.5"
             >
-              <Plus className="w-3.5 h-3.5" /> 记一餐
+              <Plus className="w-3 h-3" /> 记一餐
             </button>
           </div>
 
-          {meals.length === 0 ? (
-            <div className="bg-zinc-900/50 border border-dashed border-zinc-800 rounded-3xl p-8 text-center text-zinc-500 text-xs">
-              今天还没有记录任何餐食，点击上方「拍照分析」开始打卡吧 🥗
-            </div>
-          ) : (
-            meals.map((meal) => (
-              <div
-                key={meal.id}
-                className="bg-zinc-900 border border-zinc-800/90 p-3.5 rounded-2xl flex items-center justify-between transition hover:border-zinc-700"
-              >
-                <div className="flex items-center gap-3">
-                  <div className="w-11 h-11 rounded-xl bg-zinc-950 border border-zinc-800 flex items-center justify-center text-xl">
-                    {meal.emoji}
-                  </div>
-                  <div>
-                    <h4 className="text-xs font-bold text-white">{meal.food_name}</h4>
-                    <p className="text-[11px] text-zinc-500 mt-0.5">
-                      蛋 {meal.protein_g}g · 碳 {meal.carbs_g}g · 脂 {meal.fat_g}g
-                    </p>
-                  </div>
-                </div>
-
-                <div className="flex items-center gap-3">
-                  <div className="text-right">
-                    <span className="text-xs font-extrabold text-white">+{meal.calories}</span>
-                    <span className="text-[9px] text-zinc-500 block font-mono">kcal</span>
-                  </div>
-                  <button
-                    onClick={() => handleDeleteMeal(meal.id)}
-                    className="text-zinc-600 hover:text-red-400 transition p-1"
-                  >
-                    <Trash2 className="w-3.5 h-3.5" />
-                  </button>
-                </div>
+          <div className="flex-1 overflow-y-auto space-y-1.5 pr-0.5">
+            {meals.length === 0 ? (
+              <div className="h-full flex items-center justify-center text-center text-zinc-500 text-[11px]">
+                点击上方「拍照分析」开始打卡 🥗
               </div>
-            ))
-          )}
+            ) : (
+              meals.map((meal) => (
+                <div
+                  key={meal.id}
+                  className="bg-zinc-950/80 border border-zinc-800/80 p-2 rounded-xl flex items-center justify-between transition hover:border-zinc-700"
+                >
+                  <div className="flex items-center gap-2.5">
+                    <div className="w-8 h-8 rounded-lg bg-zinc-900 border border-zinc-800 flex items-center justify-center text-base">
+                      {meal.emoji}
+                    </div>
+                    <div>
+                      <h4 className="text-xs font-bold text-white leading-none">{meal.food_name}</h4>
+                      <p className="text-[10px] text-zinc-500 mt-1">
+                        蛋 {meal.protein_g}g · 碳 {meal.carbs_g}g · 脂 {meal.fat_g}g
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="flex items-center gap-2.5">
+                    <div className="text-right">
+                      <span className="text-xs font-extrabold text-white">+{meal.calories}</span>
+                      <span className="text-[8px] text-zinc-500 block font-mono leading-none">kcal</span>
+                    </div>
+                    <button
+                      onClick={() => handleDeleteMeal(meal.id)}
+                      className="text-zinc-600 hover:text-red-400 transition p-1"
+                    >
+                      <Trash2 className="w-3 h-3" />
+                    </button>
+                  </div>
+                </div>
+              ))
+            )}
+          </div>
         </div>
       </div>
 
-      {/* 底部固定导航条 (iOS 毛玻璃风格) */}
-      <nav className="fixed bottom-0 inset-x-0 h-20 glass-nav border-t border-zinc-800/80 px-8 flex justify-around items-center z-40 max-w-md mx-auto">
-        <button className="flex flex-col items-center gap-1 text-emerald-400 font-bold">
-          <Flame className="w-5 h-5" />
-          <span className="text-[10px]">今日缺口</span>
+      {/* 底部固定导航条 (精美居中对齐，高度收窄) */}
+      <nav className="fixed bottom-0 inset-x-0 h-16 glass-nav border-t border-zinc-800/80 px-8 flex justify-around items-center z-40 max-w-md mx-auto">
+        <button className="flex flex-col items-center gap-0.5 text-emerald-400 font-bold">
+          <Flame className="w-4 h-4" />
+          <span className="text-[9px] leading-none">今日缺口</span>
         </button>
 
-        {/* 悬浮凸起拍照按钮 */}
+        {/* 悬浮居中对齐拍照按钮 */}
         <button
           onClick={() => setIsCameraOpen(true)}
-          className="-top-5 relative active:scale-95 transition"
+          className="-top-3 relative active:scale-95 transition"
         >
-          <div className="w-14 h-14 rounded-full bg-gradient-to-tr from-emerald-500 to-teal-400 p-1 shadow-lg shadow-emerald-500/30 flex items-center justify-center text-black font-extrabold">
-            <Camera className="w-7 h-7" />
+          <div className="w-12 h-12 rounded-full bg-gradient-to-tr from-emerald-500 to-teal-400 p-0.5 shadow-lg shadow-emerald-500/30 flex items-center justify-center text-black font-extrabold">
+            <Camera className="w-6 h-6" />
           </div>
         </button>
 
         <button
           onClick={() => setIsSettingsOpen(true)}
-          className="flex flex-col items-center gap-1 text-zinc-500 hover:text-zinc-300"
+          className="flex flex-col items-center gap-0.5 text-zinc-500 hover:text-zinc-300"
         >
-          <Settings className="w-5 h-5" />
-          <span className="text-[10px]">体征模型</span>
+          <Settings className="w-4 h-4" />
+          <span className="text-[9px] leading-none">体征模型</span>
         </button>
       </nav>
 
