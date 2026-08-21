@@ -299,26 +299,24 @@ export default function HomePage() {
         </div>
       </div>
 
-      {/* 底部固定导航条 (iOS 毛玻璃风格，居中对齐) */}
-      <nav className="fixed bottom-0 inset-x-0 h-16 glass-nav border-t border-zinc-800/80 px-8 flex justify-around items-center z-40 max-w-md mx-auto">
-        <button className="flex flex-col items-center gap-0.5 text-emerald-400 font-bold">
+      {/* 底部固定导航条 (三个按钮完全在同一水平线，平齐对齐，无凸起) */}
+      <nav className="fixed bottom-0 inset-x-0 h-16 glass-nav border-t border-zinc-800/80 px-4 flex justify-around items-center z-40 max-w-md mx-auto">
+        <button className="flex-1 flex flex-col items-center justify-center gap-1 text-emerald-400 font-bold">
           <Flame className="w-5 h-5" />
           <span className="text-[10px] leading-none">今日缺口</span>
         </button>
 
-        {/* 悬浮居中拍照按钮 */}
         <button
           onClick={() => setIsCameraOpen(true)}
-          className="-top-3 relative active:scale-95 transition"
+          className="flex-1 flex flex-col items-center justify-center gap-1 text-emerald-400 hover:text-teal-300 active:scale-95 transition font-bold"
         >
-          <div className="w-13 h-13 rounded-full bg-gradient-to-tr from-emerald-500 to-teal-400 p-0.5 shadow-lg shadow-emerald-500/30 flex items-center justify-center text-black font-extrabold">
-            <Camera className="w-6 h-6" />
-          </div>
+          <Camera className="w-5 h-5" />
+          <span className="text-[10px] leading-none">拍照识别</span>
         </button>
 
         <button
           onClick={() => setIsSettingsOpen(true)}
-          className="flex flex-col items-center gap-0.5 text-zinc-500 hover:text-zinc-300"
+          className="flex-1 flex flex-col items-center justify-center gap-1 text-zinc-500 hover:text-zinc-300 active:scale-95 transition"
         >
           <Settings className="w-5 h-5" />
           <span className="text-[10px] leading-none">体征模型</span>
