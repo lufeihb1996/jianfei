@@ -11,6 +11,7 @@ import { UserProfile, MealRecord, FoodAnalysisResult, MealType } from '@/types';
 import { DeficitDualRing } from '@/components/DeficitDualRing';
 import { CameraScanModal } from '@/components/CameraScanModal';
 import { SettingsModal } from '@/components/SettingsModal';
+import { ManualAddMealModal } from '@/components/ManualAddMealModal';
 import {
   Camera,
   Settings,
@@ -18,6 +19,7 @@ import {
   Plus,
   Trash2,
   Sparkles,
+  PlusCircle,
 } from 'lucide-react';
 
 export default function HomePage() {
@@ -25,6 +27,7 @@ export default function HomePage() {
   const [meals, setMeals] = useState<MealRecord[]>([]);
   const [isCameraOpen, setIsCameraOpen] = useState(false);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
+  const [isManualAddOpen, setIsManualAddOpen] = useState(false);
   const [liveBurned, setLiveBurned] = useState(0);
 
   // 初始化加载 LocalStorage 数据
@@ -251,12 +254,20 @@ export default function HomePage() {
             <h3 className="text-xs font-bold text-zinc-400 uppercase tracking-wider">
               今日饮食明细 ({meals.length} 餐)
             </h3>
-            <button
-              onClick={() => setIsCameraOpen(true)}
-              className="text-xs text-emerald-400 font-semibold flex items-center gap-0.5"
-            >
-              <Plus className="w-3.5 h-3.5" /> 记一餐
-            </button>
+            <div className="flex items-center gap-2">
+              <button
+                onClick={() => setIsManualAddOpen(true)}
+                className="text-xs bg-zinc-800 hover:bg-zinc-700 text-zinc-200 px-2.5 py-1 rounded-xl font-medium flex items-center gap-1 transition active:scale-95"
+              >
+                <Plus className="w-3 h-3" /> 手动记
+              </button>
+              <button
+                onClick={() => setIsCameraOpen(true)}
+                className="text-xs bg-emerald-500 hover:bg-emerald-600 text-white px-2.5 py-1 rounded-xl font-bold flex items-center gap-1 transition active:scale-95 shadow-sm shadow-emerald-500/20"
+              >
+                <Camera className="w-3 h-3" /> 拍一餐
+              </button>
+            </div>
           </div>
 
           {meals.length === 0 ? (
@@ -299,11 +310,19 @@ export default function HomePage() {
         </div>
       </div>
 
-      {/* 底部固定导航条 (三个按钮完全在同一水平线，平齐对齐，无凸起) */}
-      <nav className="fixed bottom-0 inset-x-0 h-16 glass-nav border-t border-zinc-800/80 px-4 flex justify-around items-center z-40 max-w-md mx-auto">
+      {/* 底部固定导航条 (四个核心功能平齐对齐：今日缺口、手动记、拍照识别、体征设置) */}
+      <nav className="fixed bottom-0 inset-x-0 h-16 glass-nav border-t border-zinc-800/80 px-3 flex justify-around items-center z-40 max-w-md mx-auto">
         <button className="flex-1 flex flex-col items-center justify-center gap-1 text-emerald-400 font-bold">
           <Flame className="w-5 h-5" />
           <span className="text-[10px] leading-none">今日缺口</span>
+        </button>
+
+        <button
+          onClick={() => setIsManualAddOpen(true)}
+          className="flex-1 flex flex-col items-center justify-center gap-1 text-zinc-400 hover:text-white active:scale-95 transition font-medium"
+        >
+          <PlusCircle className="w-5 h-5" />
+          <span className="text-[10px] leading-none">手动记录</span>
         </button>
 
         <button
@@ -319,7 +338,7 @@ export default function HomePage() {
           className="flex-1 flex flex-col items-center justify-center gap-1 text-zinc-500 hover:text-zinc-300 active:scale-95 transition"
         >
           <Settings className="w-5 h-5" />
-          <span className="text-[10px] leading-none">体征模型</span>
+          <span className="text-[10px] leading-none">体征设置</span>
         </button>
       </nav>
 
@@ -330,6 +349,12 @@ export default function HomePage() {
         onConfirmMeal={handleConfirmMeal}
         openrouterKey={profile.openrouter_key}
         preferredModel={profile.preferred_model}
+      />
+
+      <ManualAddMealModal
+        isOpen={isManualAddOpen}
+        onClose={() => setIsManualAddOpen(false)}
+        onConfirm={handleConfirmMeal}
       />
 
       <SettingsModal
