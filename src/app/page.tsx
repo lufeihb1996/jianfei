@@ -162,7 +162,7 @@ export default function HomePage() {
 
   return (
     <main className="min-h-screen max-w-md mx-auto flex flex-col justify-between pb-28 pt-4 px-4 select-none">
-      {/* 顶部标题与设置入口 */}
+      {/* 顶部标题栏 (去掉了右上角设置按钮，保持干净极简) */}
       <header className="flex justify-between items-center py-2">
         <div className="flex items-center gap-2">
           <div className="w-8 h-8 rounded-xl bg-gradient-to-tr from-emerald-500 to-teal-400 flex items-center justify-center text-black font-extrabold text-sm shadow-md shadow-emerald-500/20">
@@ -174,13 +174,9 @@ export default function HomePage() {
           </div>
         </div>
 
-        <div className="flex items-center gap-2">
-          <button
-            onClick={() => setIsSettingsOpen(true)}
-            className="w-9 h-9 rounded-full bg-zinc-900 border border-zinc-800 flex items-center justify-center text-zinc-400 hover:text-white transition active:scale-95 shadow-sm"
-          >
-            <Settings className="w-4 h-4" />
-          </button>
+        <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-zinc-900 border border-zinc-800 text-[10px] text-zinc-400 font-medium font-mono">
+          <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+          {profile.preferred_model.split('/')[1] || 'GPT-4o mini'}
         </div>
       </header>
 
@@ -327,8 +323,8 @@ export default function HomePage() {
         </div>
       )}
 
-      {/* 底部固定导航条 (左：今日缺口，中：拍照识别，右：减重趋势) */}
-      <nav className="fixed bottom-0 inset-x-0 h-16 glass-nav border-t border-zinc-800/80 px-6 flex justify-around items-center z-40 max-w-md mx-auto">
+      {/* 底部固定导航条 (4 个按钮在同一水平线：今日缺口、拍照识别、减重趋势、个人设置) */}
+      <nav className="fixed bottom-0 inset-x-0 h-16 glass-nav border-t border-zinc-800/80 px-3 flex justify-around items-center z-40 max-w-md mx-auto">
         <button
           onClick={() => setCurrentTab('today')}
           className={`flex-1 flex flex-col items-center justify-center gap-1 transition ${
@@ -341,7 +337,7 @@ export default function HomePage() {
           <span className="text-[10px] leading-none">今日缺口</span>
         </button>
 
-        {/* 核心中央拍照按钮 (在同一水平线上，醒目高亮) */}
+        {/* 拍照识别 */}
         <button
           onClick={() => setIsCameraOpen(true)}
           className="flex-1 flex flex-col items-center justify-center gap-1 text-emerald-400 hover:text-teal-300 active:scale-95 transition font-bold"
@@ -350,6 +346,7 @@ export default function HomePage() {
           <span className="text-[10px] leading-none">拍照识别</span>
         </button>
 
+        {/* 减重趋势 */}
         <button
           onClick={() => setCurrentTab('trends')}
           className={`flex-1 flex flex-col items-center justify-center gap-1 transition ${
@@ -360,6 +357,15 @@ export default function HomePage() {
         >
           <TrendingDown className="w-5 h-5" />
           <span className="text-[10px] leading-none">减重趋势</span>
+        </button>
+
+        {/* 个人体征与模型设置 */}
+        <button
+          onClick={() => setIsSettingsOpen(true)}
+          className="flex-1 flex flex-col items-center justify-center gap-1 text-zinc-500 hover:text-zinc-300 active:scale-95 transition"
+        >
+          <Settings className="w-5 h-5" />
+          <span className="text-[10px] leading-none">体征设置</span>
         </button>
       </nav>
 
