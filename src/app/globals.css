@@ -1,0 +1,40 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --sat: env(safe-area-inset-top);
+    --sab: env(safe-area-inset-bottom);
+    --sal: env(safe-area-inset-left);
+    --sar: env(safe-area-inset-right);
+  }
+
+  body {
+    -webkit-font-smoothing: antialiased;
+    -webkit-touch-callout: none;
+    -webkit-user-select: none;
+    user-select: none;
+  }
+}
+
+/* 隐藏原生滚动条 */
+::-webkit-scrollbar {
+  display: none;
+}
+
+.glass-nav {
+  background: rgba(24, 24, 27, 0.82);
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
+}
+
+@keyframes scan-anim {
+  0% { top: 10%; opacity: 0.8; }
+  50% { top: 85%; opacity: 1; }
+  100% { top: 10%; opacity: 0.8; }
+}
+
+.scanner-laser {
+  animation: scan-anim 2s ease-in-out infinite;
+}
